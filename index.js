@@ -158,18 +158,24 @@ app.use(function(req, res, next) {
 	if (['HEAD', 'GET'].includes(req.method)) {
 		var current = new URL(req.url, req.protocol + '://' + req.headers.host);
 		fs.readFile(req.file, (err, data) => {
-			if (err) {
-				res.render('index', {
-					body: '',
-					source: '',
-					hash: crypto.createHash('md5').update(secret + req.url).digest('hex')
-				})
-			} else {
-				res.render('index', {
-					body: marked(data.toString()),
-					source: data.toString(),
-					hash: crypto.createHash('md5').update(secret + req.url).digest('hex')
-				})
+			if (req.accepts('html')) {
+				if (err) {
+					res.render('index', {
+						body: '',
+						source: '',
+						hash: crypto.createHash('md5').update(secret + req.url).digest('hex'),
+						authenticated: true
+					})
+				} else {
+					res.render('index', {
+						body: marked(data.toString()),
+						source: data.toString(),
+						hash: crypto.createHash('md5').update(secret + req.url).digest('hex'),
+						authenticated: true
+					})
+				}
+			} else if (req.accepts('text/markdown')) {
+				res.send(data).end();
 			}
 		})
 	} else {

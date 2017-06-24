@@ -1,39 +1,231 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 const cookieTalk = require('cookie-talk').factory();
+const Receptor = require('../lib/admin/receptor');
+const Api = require('../lib/admin/api');
+const Editor = require('../lib/admin/editor');
+const Save = require('../lib/admin/save');
 
-const cookieName = 'textinput';
-const sendText = 'sendText';
+const ns = 'admin'
 
-var text = new cookieTalk(sendText)
-text.onMessage(function(msg) {
-	//console.log('msg', msg);
-	document.getElementById('input').value = msg;
-})
+const receptor = new Receptor(ns);
+const api = new Api(ns);
+const editor = new Editor(document.getElementById('input'));
 
-var c = new cookieTalk(cookieName);
-//var e = document.getElementById('save');
-// e.addEventListener('click', (e) => {
-// 	c.send('hello', function(message) {
-// 		console.log('Gone: ' + message);
-// 	});
-// });
+const save = new Save(document.getElementById('save'));
 
-var input = document.getElementById('input');
-input.addEventListener('keyup', (e) => {
-	c.send(input.value, function() {
-		//console.log('sent!');
-	})
-})
+},{"../lib/admin/api":2,"../lib/admin/editor":3,"../lib/admin/receptor":4,"../lib/admin/save":5,"cookie-talk":8}],2:[function(require,module,exports){
+const Mitter = require('../mitter');
+
+module.exports = class Api extends Mitter {
+	constructor(ns) {
+		super(ns);
+		this.on('load.section', (path) => {
+			this.load(path, (err, response) =>  {
+				if(err) {
+					this.emit('load.section.fail', err)
+				} else {
+					this.emit('load.section.success', {path: path, data: response})
+				}
+			})
+		});
+
+		this.on('save.section', (object) => {
+			this.save(object.path, object.data, (err) => {
+				if(err) {
+					console.err(err);
+					this.emit('save.section.fail');
+				} else {
+					console.log('Done!');
+					this.emit('save.section.success');
+				}
+			})
+		})
+	}
+
+	load(path, callback) {
+		try {
+			var req = new XMLHttpRequest();
+			req.open('GET', path);
+			req.setRequestHeader('Accept', 'text/markdown');
+			//req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+			req.onreadystatechange = function() {
+				if (req.readyState === XMLHttpRequest.DONE) {
+					if (req.status === 200) {
+						callback(null, req.response);
+					} else {
+						callback('Failed: ' + req.status);
+					}
+				}
+			}.bind(this);
+			req.send();
+		} catch (e) {
+			callback(e)
+		}
+	}
+
+	save(path, value, callback) {
+		try {
+			var req = new XMLHttpRequest();
+			req.open('POST', path);
+			req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+			req.onreadystatechange = function() {
+				if (req.readyState === XMLHttpRequest.DONE) {
+					if (req.status === 200) {
+						callback();
+//						console.log('Done');
+					} else {
+						callback('Failed: ' + req.status);
+						//this.emit('api.query.loaded.failed', req.status);
+					}
+				}
+			}.bind(this);
+			req.send(JSON.stringify({
+				body: value
+			}));
+		} catch (e) {
+			//this.emit('api.query.loaded.failed', e);
+			callback(e);
+		}
+	}
+}
+
+},{"../mitter":6}],3:[function(require,module,exports){
+const Mitter = require('../mitter');
+const CookieTalk = require('cookie-talk').factory();
+
+module.exports = class Editor extends Mitter {
+
+	constructor(e) {
+		super()
+		this.path = null;
+		this.e = e;
+		this.command = new CookieTalk('push-text');
+		this.on('load.section.success', (payload) => {
+			this.path = payload.path
+			this.e.value = payload.data
+		})
+
+		this.on('save.initiated', () => {
+			this.emit('save.section', {
+				path: this.path,
+				data: this.e.value
+			})
+		})
+
+		this.e.addEventListener('keyup', (e) => {
+			this.command.send(JSON.stringify({
+				path: this.path,
+				data: this.e.value
+			}), function() {
+				console.log('Data pushed');
+			})
+		})
+	}
+
+}
+
+},{"../mitter":6,"cookie-talk":8}],4:[function(require,module,exports){
+const Mitter = require('../mitter');
+const CookieTalk = require('cookie-talk').factory();
+
+module.exports = class Receptor extends Mitter {
+
+	constructor(ns) {
+		super(ns)
+		this.command = new CookieTalk('command-up');
+		this.command.onMessage(function(message) {
+			this.emit('load.section', message)
+		}.bind(this))
+	}
+}
+
+},{"../mitter":6,"cookie-talk":8}],5:[function(require,module,exports){
+const Mitter = require('../mitter');
+
+module.exports = class Save extends Mitter {
+
+	constructor(e) {
+		super()
+		this.path = null;
+		this.e = e;
+		this.e.addEventListener('click', (e) => {
+			this.emit('save.initiated', function() {
+				console.log('Save initiated');
+			})
+		})
+
+		this.on('save.section', () => {
+			this.e.disabled = true;
+		})
+
+		this.on('save.section.success', () => {
+			this.e.disabled = false;
+		})
+
+		this.on('save.section.fail', () => {
+			this.e.disabled = false;
+		})
+	}
+}
+
+},{"../mitter":6}],6:[function(require,module,exports){
+module.exports = class Mitter {
+	
+	constructor() {
+		this.globalNS = '__customEventRegsiter';
+	}
+
+	emit(namespace, payload, sync = false) {
+		if (window[this.globalNS] && window[this.globalNS][namespace]) {
+			for (var x = 0; x < window[this.globalNS][namespace].length; x++) {
+				if (sync) {
+					window[this.globalNS][namespace][x](payload);
+				} else {
+					setTimeout(function() {
+						this.method(this.payload);
+					}.bind({
+						method: window[this.globalNS][namespace][x],
+						payload: payload
+					}), 0);
+				}
+			}
+		}
+	}
+
+	on(namespace, func) {
+		if (!window[this.globalNS]) {
+			window[this.globalNS] = {}
+		}
+		if (!window[this.globalNS][namespace]) {
+			window[this.globalNS][namespace] = [];
+		}
+		window[this.globalNS][namespace].push(func);
+	}
+}
+
+// const mitt = require('mitt');
+// module.exports = class mitter {
+// 	constructor(channel = 'default') {
+// 		this.h = mitt();
+// 		this.channel = channel;
+// 	}
 //
-var control = new cookieTalk('control-channel');
-document.getElementById('save').addEventListener('click', function(e) {
-	console.log('Saving');
-	control.send('save', function() {
+// 	emit(type, val) {
+// 		console.log('Emit', type);
+// 		this.h.emit(type, val)
+// 	}
+//
+// 	on(type, handler) {
+// 		console.log('On', type, handler);
+// 		this.h.on(type, handler)
+// 	}
+//
+// 	off(type, handler) {
+// 		this.h.off(type, handler);
+// 	}
+// }
 
-	})
-});
-
-},{"cookie-talk":3}],2:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var c = require('./lib/cookie');
 var Base64 = require('js-base64').Base64;
 
@@ -89,7 +281,7 @@ module.exports = function(channel) {
 
 }
 
-},{"./lib/cookie":4,"js-base64":6}],3:[function(require,module,exports){
+},{"./lib/cookie":9,"js-base64":11}],8:[function(require,module,exports){
 var cookieTalk = {
 
 	cookie: require('./cookie'),
@@ -113,7 +305,7 @@ var cookieTalk = {
 
 module.exports = cookieTalk;
 
-},{"./cookie":2,"./storage":5}],4:[function(require,module,exports){
+},{"./cookie":7,"./storage":10}],9:[function(require,module,exports){
 module.exports = {
 	create: function(name, value, days) {
 		if (days) {
@@ -138,7 +330,7 @@ module.exports = {
 	}
 }
 
-},{}],5:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = function(channel) {
 
 	this.channel = channel;
@@ -182,7 +374,7 @@ module.exports = function(channel) {
 	}
 }
 
-},{}],6:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*
  * $Id: base64.js,v 2.15 2014/04/05 12:58:57 dankogai Exp dankogai $
  *
@@ -378,7 +570,7 @@ module.exports = function(channel) {
     }
 })(this);
 
-},{"buffer":8}],7:[function(require,module,exports){
+},{"buffer":13}],12:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -494,7 +686,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],8:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -2202,7 +2394,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":7,"ieee754":9}],9:[function(require,module,exports){
+},{"base64-js":12,"ieee754":14}],14:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1

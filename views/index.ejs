@@ -2,6 +2,7 @@
 <html lang="en">
 
 	<head>
+		<meta charset="utf-8">
 		<title></title>
 		<link rel="stylesheet" type="text/css" href="/static/main.css" media="screen" />
 	</head>
@@ -19,7 +20,7 @@
 		<div id='main'>
 			<div class="main">
 				<% if( sidebar ) { %>
-				<div class="container sidebar container-editable" data-path="/_sidebar"><div>
+				<div class="container sidebar"><div class="container-editable" data-path="/_sidebar">
 				<!-- Cannot Modify Start -->
 				<%-sidebar%>
 				<!-- Cannot Modify End -->
@@ -39,7 +40,10 @@
 				<!-- Cannot Modify End -->
 			</div>
 		<% } %>
-		<%- include('pop.ejs', {source: source, hash: hash}) %>
+		<% if(authenticated) { %>
+			<link rel="stylesheet" type="text/css" href="/static/control.css" media="screen" />
+			<script src="/static/bundle.js"></script>
+		<% } %>
 	</body>
 
 </html>

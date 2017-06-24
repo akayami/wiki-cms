@@ -1,113 +1,157 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 const cookieTalk = require('cookie-talk').factory();
 
-
-const marked = require('../node_modules/marked/index.js')
-const cookieName = 'textinput';
-const d = 'sendText';
 const editor = document.getElementById('source');
 const Section = require('../lib/section');
+const Connector = require('../lib/connector');
+const Updater = require('../lib/updater');
+const Mitter = require('../lib/mitter');
 
-
-var c = new cookieTalk(cookieName);
-c.onMessage(function(message) {
-	//console.log('Got Message' + message);
-	editor.value = message;
-	document.getElementById('body').innerHTML = marked(message);
-})
-
-
-var text = new cookieTalk(d)
-var data = document.getElementById('source').value;
-
-text.send(data, function() {
-	console.log('Pushed Initial Source');
-});
-
-var control = new cookieTalk('control-channel');
-control.onMessage(function(message) {
-	switch(message) {
-		case 'save':
-			try {
-				var req = new XMLHttpRequest();
-				req.open('POST', window.location.href);
-				req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-				req.onreadystatechange = function() {
-					if (req.readyState === XMLHttpRequest.DONE) {
-						if (req.status === 200) {
-							console.log('Done');
-						} else {
-							console.error('Failed: ' + req.status);
-							//this.emit('api.query.loaded.failed', req.status);
-						}
-					}
-				}.bind(this);
-				req.send(JSON.stringify({
-					body: editor.value,
-					hash: hash
-				}));
-			} catch (e) {
-				//this.emit('api.query.loaded.failed', e);
-				console.error(e);
-			}
-			break;
-		default:
-			console.log('Failed: ' + message);
-	}
-})
+const connector = new Connector();
 
 var editables = document.getElementsByClassName('container-editable');
 
-var sections = [];
+var sections = {};
 
 for(var x = 0; x < editables.length; x++) {
-	sections.push(new Section(editables[x]));
+	var s = new Section(editables[x]);
+	sections[s.getPath()] = s;
 }
 
-console.log(editables);
+const updater = new Updater(sections);
 
-},{"../lib/section":3,"../node_modules/marked/index.js":9,"cookie-talk":5}],2:[function(require,module,exports){
-const mitt = require('mitt');
-module.exports = class mitter {
-	constructor(channel = 'default') {
-		this.h = mitt();
-		this.channel = channel;
+
+const mitter = new Mitter();
+
+mitter.emit('load.section', window.location.pathname);
+
+},{"../lib/connector":2,"../lib/mitter":3,"../lib/section":4,"../lib/updater":5,"cookie-talk":7}],2:[function(require,module,exports){
+const Mitter = require('./mitter');
+const CookieTalk = require('cookie-talk').factory();
+
+module.exports = class Connector extends Mitter {
+
+	constructor() {
+		super();
+		this.command = new CookieTalk('command-up');
+		this.on('load.section', function(path) {
+			this.command.send(path);
+		}.bind(this));
 	}
 
-	emit(type, val) {
-		this.h.emit(type, val)
+}
+
+},{"./mitter":3,"cookie-talk":7}],3:[function(require,module,exports){
+module.exports = class Mitter {
+	
+	constructor() {
+		this.globalNS = '__customEventRegsiter';
 	}
 
-	on(type, handler) {
-		this.h.on(type, handler)
+	emit(namespace, payload, sync = false) {
+		if (window[this.globalNS] && window[this.globalNS][namespace]) {
+			for (var x = 0; x < window[this.globalNS][namespace].length; x++) {
+				if (sync) {
+					window[this.globalNS][namespace][x](payload);
+				} else {
+					setTimeout(function() {
+						this.method(this.payload);
+					}.bind({
+						method: window[this.globalNS][namespace][x],
+						payload: payload
+					}), 0);
+				}
+			}
+		}
 	}
 
-	off(type, handler) {
-		this.h.off(type, handler);
+	on(namespace, func) {
+		if (!window[this.globalNS]) {
+			window[this.globalNS] = {}
+		}
+		if (!window[this.globalNS][namespace]) {
+			window[this.globalNS][namespace] = [];
+		}
+		window[this.globalNS][namespace].push(func);
 	}
 }
 
-},{"mitt":11}],3:[function(require,module,exports){
+// const mitt = require('mitt');
+// module.exports = class mitter {
+// 	constructor(channel = 'default') {
+// 		this.h = mitt();
+// 		this.channel = channel;
+// 	}
+//
+// 	emit(type, val) {
+// 		console.log('Emit', type);
+// 		this.h.emit(type, val)
+// 	}
+//
+// 	on(type, handler) {
+// 		console.log('On', type, handler);
+// 		this.h.on(type, handler)
+// 	}
+//
+// 	off(type, handler) {
+// 		this.h.off(type, handler);
+// 	}
+// }
+
+},{}],4:[function(require,module,exports){
 const mitter = require('./mitter');
+const marked = require('../node_modules/marked/index.js')
 
-module.exports = class extends mitter {
+module.exports = class Section extends mitter {
 
 	constructor(element) {
 		super();
 		this.element = element;
+		this.path = window.location.pathname;
+		if(this.element.hasAttribute('data-path')) {
+			this.path = this.element.getAttribute('data-path');
+		}
 		this.element.addEventListener('click', function(e) {
-			if (e.shiftKey) {
-				var path = window.location.pathname;
-				if(this.element.hasAttribute('data-path')) {
-					var path = this.element.getAttribute('data-path');
-				}
-				this.emit('load.section', path);
-			}
+			this.emit('load.section', this.path);
+			// if (e.shiftKey) {
+			// 	this.emit('load.section', this.path);
+			// }
 		}.bind(this))
+	}
+
+	getPath() {
+		return this.path;
+	}
+
+	update(data) {
+		this.element.innerHTML = marked(data);
 	}
 }
 
-},{"./mitter":2}],4:[function(require,module,exports){
+},{"../node_modules/marked/index.js":11,"./mitter":3}],5:[function(require,module,exports){
+const Mitter = require('./mitter');
+const CookieTalk = require('cookie-talk').factory();
+
+module.exports = class Updater extends Mitter {
+
+	constructor(sections) {
+		super();
+		this.sections = sections;
+		this.command = new CookieTalk('push-text');
+		this.command.onMessage((data) => {
+			var object = JSON.parse(data);
+			if(this.sections[object.path]) {
+				this.sections[object.path].update(object.data);
+			} else {
+				this.emit('error', new Error('Invalid section push'))
+				console.error('Invalid section push' + object.path);
+				console.log(this.sections);
+			}
+		})
+	}
+}
+
+},{"./mitter":3,"cookie-talk":7}],6:[function(require,module,exports){
 var c = require('./lib/cookie');
 var Base64 = require('js-base64').Base64;
 
@@ -163,7 +207,7 @@ module.exports = function(channel) {
 
 }
 
-},{"./lib/cookie":6,"js-base64":8}],5:[function(require,module,exports){
+},{"./lib/cookie":8,"js-base64":10}],7:[function(require,module,exports){
 var cookieTalk = {
 
 	cookie: require('./cookie'),
@@ -187,7 +231,7 @@ var cookieTalk = {
 
 module.exports = cookieTalk;
 
-},{"./cookie":4,"./storage":7}],6:[function(require,module,exports){
+},{"./cookie":6,"./storage":9}],8:[function(require,module,exports){
 module.exports = {
 	create: function(name, value, days) {
 		if (days) {
@@ -212,7 +256,7 @@ module.exports = {
 	}
 }
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = function(channel) {
 
 	this.channel = channel;
@@ -256,7 +300,7 @@ module.exports = function(channel) {
 	}
 }
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*
  * $Id: base64.js,v 2.15 2014/04/05 12:58:57 dankogai Exp dankogai $
  *
@@ -452,10 +496,10 @@ module.exports = function(channel) {
     }
 })(this);
 
-},{"buffer":13}],9:[function(require,module,exports){
+},{"buffer":14}],11:[function(require,module,exports){
 module.exports = require('./lib/marked');
 
-},{"./lib/marked":10}],10:[function(require,module,exports){
+},{"./lib/marked":12}],12:[function(require,module,exports){
 (function (global){
 /**
  * marked - a markdown parser
@@ -1745,10 +1789,7 @@ if (typeof module !== 'undefined' && typeof exports === 'object') {
 }());
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],11:[function(require,module,exports){
-function n(n){return n=n||Object.create(null),{on:function(t,o){(n[t]||(n[t]=[])).push(o)},off:function(t,o){n[t]&&n[t].splice(n[t].indexOf(o)>>>0,1)},emit:function(t,o){(n[t]||[]).map(function(n){n(o)}),(n["*"]||[]).map(function(n){n(t,o)})}}}module.exports=n;
-
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -1864,7 +1905,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -3572,7 +3613,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":12,"ieee754":14}],14:[function(require,module,exports){
+},{"base64-js":13,"ieee754":15}],15:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
