@@ -1,0 +1,17 @@
+.control-container {
+	border: 1px solid red;
+	position: fixed;
+	top: 0px;
+	right: 0px;
+	opacity: 0.8;
+}
+
+.container-editable:hover {
+	outline: 1px solid red;
+	cursor: pointer;
+}
+
+textarea.editor {
+	width: 100%;
+	height: 100%;
+}

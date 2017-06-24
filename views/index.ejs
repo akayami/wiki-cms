@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="/static/main.css" media="screen" />
+	</head>
+
+	<body>
+		<%
+		if ( header ) {
+		%>
+			<div class="container header container-editable" data-path="/_header">
+			<!-- Cannot Modify Start -->
+				<%-header%>
+			<!-- Cannot Modify End -->
+			</div>
+		<% } %>
+		<div id='main'>
+			<div class="main">
+				<% if( sidebar ) { %>
+				<div class="container sidebar container-editable" data-path="/_sidebar"><div>
+				<!-- Cannot Modify Start -->
+				<%-sidebar%>
+				<!-- Cannot Modify End -->
+				</div></div>
+				<% } %>
+				<div class='container body container-editable'><div id="body">
+				<!-- Cannot Modify Start -->
+				<%-body%>
+				<!-- Cannot Modify End -->
+				</div></div>
+			</div>
+		</div>
+		<% if( footer ) { %>
+			<div  class="container footer container-editable"  data-path="/_footer">
+				<!-- Cannot Modify Start -->
+				<%-footer%>
+				<!-- Cannot Modify End -->
+			</div>
+		<% } %>
+		<%- include('pop.ejs', {source: source, hash: hash}) %>
+	</body>
+
+</html>

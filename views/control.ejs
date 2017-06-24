@@ -1,0 +1,50 @@
+<link rel="stylesheet" type="text/css" href="/static/control.css" media="screen" />
+<script src="/static/marked.min.js"></script>
+<div id="control" class="control-container">
+	<textarea id="editor" name="name" rows="15" cols="40" class="editor"><%-source%></textarea>
+	<button id="save">Save</button>
+</div>
+<script>
+	marked.setOptions({
+		renderer: new marked.Renderer(),
+		gfm: true,
+		tables: true,
+		breaks: false,
+		pedantic: false,
+		sanitize: false,
+		smartLists: true,
+		smartypants: false
+	})
+	var editor = document.getElementById('editor');
+	var body = document.getElementById('body');
+	editor.addEventListener('keyup', function(e) {
+		body.innerHTML = marked(e.target.value);
+	});
+	var hash = '<%-hash%>'
+
+	var save = document.getElementById('save');
+	save.addEventListener('click', function(e) {
+		try {
+			var req = new XMLHttpRequest();
+			req.open('POST', window.location.href);
+			req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+			req.onreadystatechange = function() {
+				if (req.readyState === XMLHttpRequest.DONE) {
+					if (req.status === 200) {
+						console.log('Done');
+					} else {
+						console.error('Failed');
+						//this.emit('api.query.loaded.failed', req.status);
+					}
+				}
+			}.bind(this);
+			req.send(JSON.stringify({
+				body: editor.value,
+				hash: hash
+			}));
+		} catch (e) {
+			//this.emit('api.query.loaded.failed', e);
+			console.error(e);
+		}
+	})
+</script>

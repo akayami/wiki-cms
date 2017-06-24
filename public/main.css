@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css?family=Jura:600');
+@import url('https://fonts.googleapis.com/css?family=Nunito');
+
+@font-face {
+	font-family: 'eurostile';
+	src: url('/static/Eurostile.ttf');
+}
+
+body {
+	/*text-align: center;*/
+	overflow: scroll;
+	font-family: "Nunito", sans-serif;
+	/*font-weight: 400;*/
+	/*letter-spacing: 1px;*/
+	color: #4d5153;
+	margin: 0px 0px 0px 0px;
+}
+
+#main {
+	max-width: 1024px;
+	margin: 0 auto;
+}
+
+a {
+	text-decoration: none;
+	color: #4d5153;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+
+.container {
+	/*border: 1px solid red;*/
+}
+
+.main {
+	margin-top: 70px;
+	/*display: table-row;*/
+}
+
+.main h1 {
+	font-family: "Jura", sans-serif;
+}
+
+.body {
+	display: table-cell;
+	width: 100%;
+}
+
+.body div {
+	padding: 10px 10px 10px 10px;
+	/*background-color: #2d7eff;*/
+}
+
+.sidebar {
+	display: table-cell;
+	/*padding: 0px 0px 0px 0px;*/
+}
+
+.sidebar div {
+	padding: 10px 10px 10px 10px;
+	background-color: #e2e2e2;
+	color: #4e4e4f;
+	vertical-align: middle;
+	margin-top: 0px;
+	width: 200px;
+}
+
+.sidebar ul {
+	padding-left: 15px;
+}
+
+.sidebar li {
+	margin-top: 10px;
+}
+
+.sidebar a {
+	text-decoration: none;
+}
+
+.sidebar a:link {
+	color: #4e4e4f;
+}
+
+.sidebar a:visited {
+	color: #4e4e4f;
+}
+
+.sidebar a:hover {
+	color: #4e4e4f;
+	text-decoration: underline;
+}
+
+.sidebar a:active {
+	color: #4e4e4f;
+}
+
+.footer {
+	/*border: 1px solid red;*/
+	font-family: "Jura", sans-serif;
+	position: fixed;
+	bottom: 0px;
+	right: auto;
+	text-align: center;
+	width: 100%;
+	background-color: #ffffff;
+}
+
+.header {
+	/*border: 1px solid red;*/
+	position: fixed;
+	top: 0px;
+	right: auto;
+	text-align: center;
+	width: 100%;
+	background-color: #0080bc;
+	color: #ffffff;
+	font-family: "Jura", sans-serif;
+	font-size: 40px;
+	/*height: 50px;*/
+	/*vertical-align: middle;*/
+
+}
+
+.header img {
+	/*height: 40px;*/
+	padding-right: 20px;
+	vertical-align: middle;
+}
+
+
+.header p {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
