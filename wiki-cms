@@ -2,88 +2,9 @@
 
 const program = require('commander');
 
-
 program
 	.version('0.0.1')
-	.usage('<config-file>', 'Start wiki-cms using specified config file')
+	//.arguments('<config-file>', 'Start wiki-cms using specified config file')
+	.command('start', 'Starts an instance of wiki-cms')
 	.command('generate', 'Generate default config stub')
-
 program.parse(process.argv);
-
-const toml = require('toml');
-const concat = require('concat-stream');
-const fs = require('fs');
-var cfgfile = __dirname + '/' + process.argv[0];
-if(!process.argv[2]) {
-	console.error('Need a config file');
-	process.exit(1)
-}
-
-fs.createReadStream(process.argv[2], 'utf8').pipe(concat(function(data) {
-	const config = toml.parse(data);
-
-	const git = require('simple-git')(config.git.repo);
-
-	var cluster = require('cluster');
-	var numCPUs = require('os').cpus().length;
-
-	if (cluster.isMaster) {
-		var remote = (config.git.remote ? config.git.remote : 'origin');
-		var branch = (config.git.branch ? config.git.branch : 'master')
-		git.pull(remote, branch, function() {
-			console.log('Pull Done');
-		})
-
-		setInterval(function() {
-			git.pull(remote, branch, function(err) {
-				if (err) {
-					console.log(err);
-				}
-				console.log('Auto Pull Done');
-			})
-		}, (config.git.pull_freq ? config.git.pull_freq : 60000));
-
-		setInterval(function() {
-			git.push(remote, branch, function(err) {
-				if (err) {
-					console.log(err);
-				}
-				console.log('Auto Push Done');
-			})
-		}, (config.git.push_freq ? config.git.push_freq : 60000))
-
-		function newWorker() {
-			var worker = cluster.fork();
-			worker.on('exit', function(code, signal) {
-				if (signal) {
-					console.log(`Worker killed by signal: ${signal}`);
-				} else if (code !== 0) {
-					console.log(`worker exited with error code: ${code}`);
-				} else {
-					console.log('worker success!');
-				}
-			})
-			return worker;
-		}
-
-		// Fork workers.
-		for (var i = 0; i < numCPUs; i++) {
-			var worker = newWorker();
-		}
-
-		var event = cluster.on('exit', function(deadWorker, code, signal) {
-			var worker = newWorker();
-
-			// Note the process IDs
-			var newPID = worker.process.pid;
-			var oldPID = deadWorker.process.pid;
-
-			// Log the event
-			console.log('worker ' + oldPID + ' died.');
-			console.log('worker ' + newPID + ' born.');
-
-		});
-	} else {
-		require('./worker.js');
-	}
-}));

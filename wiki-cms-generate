@@ -6,6 +6,8 @@ program
 	.version('0.0.1')
 
 program.parse(process.argv);
+
+
 var config =
 `
 [app]
@@ -23,4 +25,5 @@ branch = "master"
 [admin]
 pathname = "/admin"
 `
-process.stdout.write(config, null, 4)
+process.stdout.write(config, null, 4);
+process.exit(0);

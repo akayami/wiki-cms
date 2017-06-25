@@ -1,14 +1,14 @@
-#!/usr/bin/env node
 const toml = require('toml');
 const concat = require('concat-stream');
 const fs = require('fs-extra');
-var cfgfile = __dirname + '/' + process.argv[2];
+const path = require('path')
+var cfgfile = path.resolve(__dirname, process.argv[2]);
 if(!process.argv[2]) {
 	console.error('Need a config file');
 	process.exit(1)
 }
 
-fs.createReadStream(process.argv[2], 'utf8').pipe(concat(function(data) {
+fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 	const config = toml.parse(data);
 	const express = require('express');
 	const app = express();
