@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+
+const program = require('commander');
+
+program
+	.version('0.0.1')
+
+program.parse(process.argv);
+var config =
+`
+[app]
+port = 5555
+partials = ["_sidebar", "_header", "_footer"]
+[git]
+repo = "/path/to/git/repo"
+data_prefix = ""
+asset_prefix = ""
+push_freq = 60000
+pull_freq = 60000
+remote = "origin"
+branch = "master"
+
+[admin]
+pathname = "/admin"
+`
+process.stdout.write(config, null, 4)

@@ -1,15 +1,47 @@
 {
   "name": "wiki-cms",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
+  "version": "0.0.1",
+  "description": "Simple wiki system based on git",
+  "main": "wiki-cms",
+  "directories": {
+    "lib": "lib"
+  },
   "dependencies": {
     "body-parser": "^1.17.2",
+    "commander": "^2.10.0",
+    "concat-stream": "^1.6.0",
     "cookie-talk": "^1.1.0",
     "ejs": "^2.5.6",
     "express": "^4.15.3",
     "fs-extra": "^3.0.1",
     "markd": "^1.2.0",
-    "simple-git": "^1.73.0"
-  }
+    "simple-git": "^1.73.0",
+    "toml": "^2.3.2"
+  },
+  "devDependencies": {
+    "browserify": "^14.4.0",
+    "uglify-es": "github:mishoo/UglifyJS2#harmony",
+    "yarn": "^0.24.5"
+  },
+  "scripts": {
+    "bundle": "make bundle",
+    "minify": "make minify",
+    "build": "node_modules/.bin/yarn bundle && node_modules/.bin/yarn minify",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akayami/wiki-cms.git"
+  },
+  "keywords": [
+    "wiki",
+    "cms",
+    "git"
+  ],
+  "author": "Tomasz Rakowski",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/akayami/wiki-cms/issues"
+  },
+  "homepage": "https://github.com/akayami/wiki-cms#readme"
 }

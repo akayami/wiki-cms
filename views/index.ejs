@@ -9,40 +9,40 @@
 
 	<body>
 		<%
-		if ( header ) {
+		if (partials['_header']) {
 		%>
 			<div class="container header container-editable" data-path="/_header">
 			<!-- Cannot Modify Start -->
-				<%-header%>
+				<%-partials['_header']%>
 			<!-- Cannot Modify End -->
 			</div>
 		<% } %>
 		<div id='main'>
 			<div class="main">
-				<% if( sidebar ) { %>
+				<% if( partials['_sidebar'] ) { %>
 				<div class="container sidebar"><div class="container-editable" data-path="/_sidebar">
 				<!-- Cannot Modify Start -->
-				<%-sidebar%>
+				<%-partials['_sidebar']%>
 				<!-- Cannot Modify End -->
 				</div></div>
 				<% } %>
-				<div class='container body container-editable'><div id="body">
+				<div class='container body'><div id="body" class="container-editable">
 				<!-- Cannot Modify Start -->
 				<%-body%>
 				<!-- Cannot Modify End -->
 				</div></div>
 			</div>
 		</div>
-		<% if( footer ) { %>
+		<% if( partials['_footer'] ) { %>
 			<div  class="container footer container-editable"  data-path="/_footer">
 				<!-- Cannot Modify Start -->
-				<%-footer%>
+				<%-partials['_footer']%>
 				<!-- Cannot Modify End -->
 			</div>
 		<% } %>
 		<% if(authenticated) { %>
 			<link rel="stylesheet" type="text/css" href="/static/control.css" media="screen" />
-			<script src="/static/bundle.js"></script>
+			<script src="/static/index.min.js"></script>
 		<% } %>
 	</body>
 
