@@ -1,9 +1,10 @@
 const toml = require('toml');
 const concat = require('concat-stream');
 const fs = require('fs-extra');
-const path = require('path')
+const path = require('path');
+const http = require('http');
 var cfgfile = path.resolve(__dirname, process.argv[2]);
-if(!process.argv[2]) {
+if (!process.argv[2]) {
 	console.error('Need a config file');
 	process.exit(1)
 }
@@ -46,19 +47,25 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 
 	app.use('/static', express.static(path.join(__dirname, 'public')));
 
+	app.use(function(req, res, next) {
+		if (req.headers['x-user-info-proxy']) {
+			req.user = JSON.parse(req.headers['x-user-info-proxy']);
+			console.log(req.user.profile.emails);
+			console.log(req.user.profile.displayName);
+		}
+		next();
+	})
+
 	app.get(config.admin.pathname, function(req, res, next) {
-		res.render('admin');
+		if (req.user) {
+			res.render('admin');
+		} else {
+			res.sendStatus(403);
+		}
 	})
 
 	app.use(function(req, res, next) {
-
-		// res.locals.sidebar = false;
-		// res.locals.footer = false;
-		// res.locals.header = false;
-
 		res.locals.partials = {};
-
-		//	var current = new URL(req.url, req.protocol + '://' + req.headers.host);
 
 		var file = req.url.replace(prefix + '/', '');
 		if (file.match(/_/)) {
@@ -68,7 +75,7 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 		next();
 	})
 
-	if(config.app.partials && config.app.partials.length) {
+	if (config.app.partials && config.app.partials.length) {
 		config.app.partials.forEach((partial) => {
 			app.use(function(req, res, next) {
 				if (!res.locals.partial) {
@@ -82,33 +89,39 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 				} else {
 					next()
 				}
-			}.bind({partial: partial}));
+			}.bind({
+				partial: partial
+			}));
 		})
 	}
 
 	app.use(bodyParser.json(), function(req, res, next) {
 		if (['POST'].includes(req.method)) {
-			fs.mkdirp(path.dirname(req.file), (err) => {
-				fs.writeFile(req.file, req.body.body, function(err, output) {
-					if (err) {
-						console.error(err);
-						res.sendStatus(500)
-					} else {
-						dirty = true;
-						res.sendStatus(200);
-						git.add(req.file, function(err) {
-							if (err) {
-								console.error(err);
-							} else {
-								console.log(req.file + ' Added');
-								git.commit('Autocommit', function(err) {
+			if (req.user) {
+				fs.mkdirp(path.dirname(req.file), (err) => {
+					fs.writeFile(req.file, req.body.body, function(err, output) {
+						if (err) {
+							console.error(err);
+							res.sendStatus(500)
+						} else {
+							dirty = true;
+							res.sendStatus(200);
+							git.add(req.file, function(err) {
+								if (err) {
 									console.error(err);
-								})
-							}
-						})
-					}
+								} else {
+									console.log(req.file + ' Added');
+									git.commit('Autocommit for ' + req.user.profile.displayName, function(err) {
+										console.error(err);
+									})
+								}
+							})
+						}
+					})
 				})
-			})
+			} else {
+				res.sendStatus(403);
+			}
 		} else {
 			next();
 		}
@@ -124,14 +137,14 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 							body: '',
 							source: '',
 							hash: crypto.createHash('md5').update(secret + req.url).digest('hex'),
-							authenticated: true
+							authenticated: (req.user ? true : false)
 						})
 					} else {
 						res.render('index', {
 							body: marked(data.toString()),
 							source: data.toString(),
 							hash: crypto.createHash('md5').update(secret + req.url).digest('hex'),
-							authenticated: true
+							authenticated: (req.user ? true : false)
 						})
 					}
 				} else if (req.accepts('text/markdown')) {
@@ -163,5 +176,30 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 		res.sendStatus(404);
 	});
 
-	app.listen(config.app.port);
+	var server = http.createServer(app);
+
+	// Based on
+	// https://stackoverflow.com/questions/16178239/gracefully-shutdown-unix-socket-server-on-nodejs-running-under-forever
+
+	server.on('error', function(e) {
+		if (e.code == 'EADDRINUSE') {
+			var s = new http.createServer(app);
+			s.on('error', function(e) { // handle error trying to talk to server
+				if (e.code == 'ECONNREFUSED') { // No other server listening
+					fs.unlinkSync(config.app.port);
+					http.listen(config.app.port, function() { //'listening' listener
+						console.log('server recovered');
+					});
+				}
+			});
+			s.listen({
+				path: config.app.port
+			}, function() {
+				console.log('Server running, giving up...');
+				process.exit();
+			});
+		}
+	});
+
+	server.listen(config.app.port);
 }))
