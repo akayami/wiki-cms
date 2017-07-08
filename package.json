@@ -1,6 +1,6 @@
 {
 	"name": "wiki-cms",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Simple wiki system based on git",
 	"main": "wiki-cms",
 	"directories": {
