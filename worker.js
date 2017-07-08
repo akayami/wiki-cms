@@ -4,6 +4,8 @@ const fs = require('fs-extra');
 const path = require('path');
 const http = require('http');
 const morgan = require('morgan');
+const favicon = require('serve-favicon')
+
 var cfgfile = path.resolve(__dirname, process.argv[2]);
 if (!process.argv[2]) {
 	console.error('Need a config file');
@@ -15,6 +17,12 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 	const express = require('express');
 	const app = express();
 	app.use(morgan(config.morgan));
+	try {
+		var faviconPath = (config.app.favicon ? path.join(__dirname, config.app.favicon) : path.join(config.git.repo, 'favicon.ico'));
+		app.use(favicon(faviconPath))
+	} catch(e) {
+		console.error(e);
+	}
 	const marked = require('marked');
 	marked.setOptions({
 		renderer: new marked.Renderer(),
@@ -31,7 +39,7 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 	} = require('url');
 	const HttpForbidden = require('./lib/error/http/forbidden');
 	const HttpError = require('./lib/error/http.js');
-	const path = require('path');
+//	const path = require('path');
 	const bodyParser = require('body-parser');
 	const crypto = require('crypto');
 
