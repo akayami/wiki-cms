@@ -3,6 +3,7 @@ const concat = require('concat-stream');
 const fs = require('fs-extra');
 const path = require('path');
 const http = require('http');
+const morgan = require('morgan');
 var cfgfile = path.resolve(__dirname, process.argv[2]);
 if (!process.argv[2]) {
 	console.error('Need a config file');
@@ -13,6 +14,7 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 	const config = toml.parse(data);
 	const express = require('express');
 	const app = express();
+	app.use(morgan(config.morgan));
 	const marked = require('marked');
 	marked.setOptions({
 		renderer: new marked.Renderer(),
@@ -132,7 +134,10 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 			var current = new URL(req.url, req.protocol + '://' + req.headers.host);
 			fs.readFile(req.file, (err, data) => {
 				if (req.accepts('html')) {
-					if (err) {
+					if (err && req.url == '/' && err.code == 'ENOENT' && config.app.defaultPage) {
+						res.redirect(config.app.defaultPage);
+					} else if (err) {
+						console.log(err, req.file, req.url);
 						res.render('index', {
 							body: '',
 							source: '',
