@@ -1,59 +1,57 @@
 {
-  "name": "wiki-cms",
-  "version": "0.0.3",
-  "description": "Simple wiki system based on git",
-  "main": "wiki-cms",
-  "directories": {
-	"lib": "lib"
-  },
-  "dependencies": {
-	"body-parser": "^1.18.3",
-	"commander": "^2.15.1",
-	"concat-stream": "^1.6.2",
-	"cookie-talk": "^1.1.0",
-	"ejs": "^2.6.1",
-	"eslint": "^4.19.1",
-	"express": "^4.16.3",
-	"fs-extra": "^6.0.1",
-	"markd": "^1.2.0",
-	"morgan": "^1.9.0",
-	"serve-favicon": "^2.5.0",
-	"simple-git": "^1.96.0",
-	"toml": "^2.3.3"
-  },
-  "devDependencies": {
-	"browserify": "^16.2.2",
-	"uglify-es": "^3.3.9",
-	"yarn": "^1.7.0"
-  },
-  "scripts": {
-	"bundle": "make bundle",
-	"minify": "make minify",
-	"build": "node_modules/.bin/yarn bundle && node_modules/.bin/yarn minify",
-	"test": "echo \"Error: no test specified\" && exit 1",
-	"lint": "node_modules/.bin/eslint --fix --ignore-pattern *.min.js",
-	"lint": "node_modules/.bin/eslint --fix --ignore-pattern *.min.js ."
-  },
-  "repository": {
-	"type": "git",
-	"url": "git+https://github.com/akayami/wiki-cms.git"
-  },
-  "keywords": [
-	"wiki",
-	"cms",
-	"git"
-  ],
-  "author": "Tomasz Rakowski",
-  "license": "ISC",
-  "bugs": {
-	"url": "https://github.com/akayami/wiki-cms/issues"
-  },
-  "homepage": "https://github.com/akayami/wiki-cms#readme",
-  "preferGlobal": "true",
-  "bin": {
-	"wiki-cms": "wiki-cms",
-	"wiki-cms-generate": "wiki-cms-generate",
-	"wiki-cms-start": "wiki-cms-start"
-  }
+	"name": "wiki-cms",
+	"version": "0.0.4",
+	"description": "Simple wiki system based on git",
+	"main": "wiki-cms",
+	"directories": {
+		"lib": "lib"
+	},
+	"dependencies": {
+		"body-parser": "^1.18.3",
+		"commander": "^2.15.1",
+		"concat-stream": "^1.6.2",
+		"cookie-talk": "^1.1.0",
+		"ejs": "^2.6.1",
+		"eslint": "^4.19.1",
+		"express": "^4.16.3",
+		"fs-extra": "^6.0.1",
+		"markd": "^1.2.0",
+		"morgan": "^1.9.0",
+		"serve-favicon": "^2.5.0",
+		"simple-git": "^1.96.0",
+		"toml": "^2.3.3"
+	},
+	"devDependencies": {
+		"browserify": "^16.2.2",
+		"uglify-es": "^3.3.9",
+		"yarn": "^1.7.0"
+	},
+	"scripts": {
+		"bundle": "make bundle",
+		"minify": "make minify",
+		"build": "node_modules/.bin/yarn bundle && node_modules/.bin/yarn minify",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lint": "node_modules/.bin/eslint --fix --ignore-pattern *.min.js ."
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/akayami/wiki-cms.git"
+	},
+	"keywords": [
+		"wiki",
+		"cms",
+		"git"
+	],
+	"author": "Tomasz Rakowski",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/akayami/wiki-cms/issues"
+	},
+	"homepage": "https://github.com/akayami/wiki-cms#readme",
+	"preferGlobal": "true",
+	"bin": {
+		"wiki-cms": "wiki-cms",
+		"wiki-cms-generate": "wiki-cms-generate",
+		"wiki-cms-start": "wiki-cms-start"
+	}
 }
-
