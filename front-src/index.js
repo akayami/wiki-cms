@@ -8,12 +8,12 @@ const Mitter = require('../lib/mitter');
 
 const connector = new Connector();
 
-var editables = document.getElementsByClassName('container-editable');
+const editables = document.getElementsByClassName('container-editable');
 
-var sections = {};
+const sections = {};
 
-for(var x = 0; x < editables.length; x++) {
-	var s = new Section(editables[x]);
+for(let x = 0; x < editables.length; x++) {
+	const s = new Section(editables[x]);
 	sections[s.getPath()] = s;
 }
 

@@ -5,7 +5,7 @@ const Api = require('../lib/admin/api');
 const Editor = require('../lib/admin/editor');
 const Save = require('../lib/admin/save');
 
-const ns = 'admin'
+const ns = 'admin';
 
 const receptor = new Receptor(ns);
 const api = new Api(ns);
@@ -22,11 +22,11 @@ module.exports = class Api extends Mitter {
 		this.on('load.section', (path) => {
 			this.load(path, (err, response) =>  {
 				if(err) {
-					this.emit('load.section.fail', err)
+					this.emit('load.section.fail', err);
 				} else {
-					this.emit('load.section.success', {path: path, data: response})
+					this.emit('load.section.success', {path: path, data: response});
 				}
-			})
+			});
 		});
 
 		this.on('save.section', (object) => {
@@ -38,13 +38,13 @@ module.exports = class Api extends Mitter {
 					console.log('Done!');
 					this.emit('save.section.success');
 				}
-			})
-		})
+			});
+		});
 	}
 
 	load(path, callback) {
 		try {
-			var req = new XMLHttpRequest();
+			const req = new XMLHttpRequest();
 			req.open('GET', path);
 			req.setRequestHeader('Accept', 'text/markdown');
 			//req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
@@ -59,20 +59,20 @@ module.exports = class Api extends Mitter {
 			}.bind(this);
 			req.send();
 		} catch (e) {
-			callback(e)
+			callback(e);
 		}
 	}
 
 	save(path, value, callback) {
 		try {
-			var req = new XMLHttpRequest();
+			const req = new XMLHttpRequest();
 			req.open('POST', path);
 			req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
 			req.onreadystatechange = function() {
 				if (req.readyState === XMLHttpRequest.DONE) {
 					if (req.status === 200) {
 						callback();
-//						console.log('Done');
+						//						console.log('Done');
 					} else {
 						callback('Failed: ' + req.status);
 						//this.emit('api.query.loaded.failed', req.status);
@@ -87,7 +87,7 @@ module.exports = class Api extends Mitter {
 			callback(e);
 		}
 	}
-}
+};
 
 },{"../mitter":6}],3:[function(require,module,exports){
 const Mitter = require('../mitter');
@@ -96,21 +96,21 @@ const CookieTalk = require('cookie-talk').factory();
 module.exports = class Editor extends Mitter {
 
 	constructor(e) {
-		super()
+		super();
 		this.path = null;
 		this.e = e;
 		this.command = new CookieTalk('push-text');
 		this.on('load.section.success', (payload) => {
-			this.path = payload.path
-			this.e.value = payload.data
-		})
+			this.path = payload.path;
+			this.e.value = payload.data;
+		});
 
 		this.on('save.initiated', () => {
 			this.emit('save.section', {
 				path: this.path,
 				data: this.e.value
-			})
-		})
+			});
+		});
 
 		this.e.addEventListener('keyup', (e) => {
 			this.command.send(JSON.stringify({
@@ -118,11 +118,11 @@ module.exports = class Editor extends Mitter {
 				data: this.e.value
 			}), function() {
 				console.log('Data pushed');
-			})
-		})
+			});
+		});
 	}
 
-}
+};
 
 },{"../mitter":6,"cookie-talk":10}],4:[function(require,module,exports){
 const Mitter = require('../mitter');
@@ -131,13 +131,13 @@ const CookieTalk = require('cookie-talk').factory();
 module.exports = class Receptor extends Mitter {
 
 	constructor(ns) {
-		super(ns)
+		super(ns);
 		this.command = new CookieTalk('command-up');
 		this.command.onMessage(function(message) {
-			this.emit('load.section', message)
-		}.bind(this))
+			this.emit('load.section', message);
+		}.bind(this));
 	}
-}
+};
 
 },{"../mitter":6,"cookie-talk":10}],5:[function(require,module,exports){
 const Mitter = require('../mitter');
@@ -145,28 +145,28 @@ const Mitter = require('../mitter');
 module.exports = class Save extends Mitter {
 
 	constructor(e) {
-		super()
+		super();
 		this.path = null;
 		this.e = e;
 		this.e.addEventListener('click', (e) => {
 			this.emit('save.initiated', function() {
 				console.log('Save initiated');
-			})
-		})
+			});
+		});
 
 		this.on('save.section', () => {
 			this.e.disabled = true;
-		})
+		});
 
 		this.on('save.section.success', () => {
 			this.e.disabled = false;
-		})
+		});
 
 		this.on('save.section.fail', () => {
 			this.e.disabled = false;
-		})
+		});
 	}
-}
+};
 
 },{"../mitter":6}],6:[function(require,module,exports){
 module.exports = class Mitter {
@@ -177,7 +177,7 @@ module.exports = class Mitter {
 
 	emit(namespace, payload, sync = false) {
 		if (window[this.globalNS] && window[this.globalNS][namespace]) {
-			for (var x = 0; x < window[this.globalNS][namespace].length; x++) {
+			for (let x = 0; x < window[this.globalNS][namespace].length; x++) {
 				if (sync) {
 					window[this.globalNS][namespace][x](payload);
 				} else {
@@ -194,14 +194,14 @@ module.exports = class Mitter {
 
 	on(namespace, func) {
 		if (!window[this.globalNS]) {
-			window[this.globalNS] = {}
+			window[this.globalNS] = {};
 		}
 		if (!window[this.globalNS][namespace]) {
 			window[this.globalNS][namespace] = [];
 		}
 		window[this.globalNS][namespace].push(func);
 	}
-}
+};
 
 },{}],7:[function(require,module,exports){
 'use strict'

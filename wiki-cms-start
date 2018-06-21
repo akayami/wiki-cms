@@ -1,22 +1,23 @@
 #!/usr/bin/env node
 const program = require('commander');
 
-var configFile;
+let configFile;
 
 program
 	.version('0.0.1')
 	.arguments('<configfile>')
 	.action(function(c) {
 		configFile = c;
-	})
+	});
 program.parse(process.argv);
 
 const toml = require('toml');
 const concat = require('concat-stream');
 const fs = require('fs');
-const path = require('path')
+const path = require('path');
+let cfgfile;
 try {
-	var cfgfile = path.resolve(__dirname, configFile);
+	cfgfile = path.resolve(__dirname, configFile);
 } catch(e) {
 	console.error('Invalid config file provided: ' + configFile);
 	process.exit();
@@ -27,15 +28,15 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 
 	const git = require('simple-git')(config.git.repo);
 
-	var cluster = require('cluster');
-	var numCPUs = require('os').cpus().length;
+	const cluster = require('cluster');
+	const numCPUs = require('os').cpus().length;
 
 	if (cluster.isMaster) {
-		var remote = (config.git.remote ? config.git.remote : 'origin');
-		var branch = (config.git.branch ? config.git.branch : 'master')
+		const remote = (config.git.remote ? config.git.remote : 'origin');
+		const branch = (config.git.branch ? config.git.branch : 'master')
 		git.pull(remote, branch, function() {
 			console.log('Pull Done');
-		})
+		});
 
 		setInterval(function() {
 			git.pull(remote, branch, function(err) {

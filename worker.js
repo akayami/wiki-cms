@@ -4,22 +4,22 @@ const fs = require('fs-extra');
 const path = require('path');
 const http = require('http');
 const morgan = require('morgan');
-const favicon = require('serve-favicon')
+const favicon = require('serve-favicon');
 
-var cfgfile = path.resolve(__dirname, process.argv[2]);
+const cfgfile = path.resolve(__dirname, process.argv[2]);
 if (!process.argv[2]) {
 	console.error('Need a config file');
-	process.exit(1)
+	process.exit(1);
 }
 
 fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 	const config = toml.parse(data);
 	const express = require('express');
 	const app = express();
-	app.use(morgan(config.morgan));
+	app.use(morgan(config.morgan || 'combined'));
 	try {
-		var faviconPath = (config.app.favicon ? path.join(__dirname, config.app.favicon) : path.join(config.git.repo, 'favicon.ico'));
-		app.use(favicon(faviconPath))
+		const faviconPath = (config.app.favicon ? path.join(__dirname, config.app.favicon) : path.join(config.git.repo, 'favicon.ico'));
+		app.use(favicon(faviconPath));
 	} catch(e) {
 		console.error(e);
 	}
@@ -33,13 +33,13 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 		sanitize: false,
 		smartLists: true,
 		smartypants: false
-	})
+	});
 	const {
 		URL
 	} = require('url');
 	const HttpForbidden = require('./lib/error/http/forbidden');
 	const HttpError = require('./lib/error/http.js');
-//	const path = require('path');
+	//	const path = require('path');
 	const bodyParser = require('body-parser');
 	const crypto = require('crypto');
 
@@ -51,11 +51,24 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 
 	const git = require('simple-git')(fsRoot);
 
-	var dirty = false;
+	let dirty = false;
 
 	app.set('view engine', 'ejs');
+	app.set('views', path.join(__dirname, '/views'));
 
 	app.use('/static', express.static(path.join(__dirname, 'public')));
+
+	// Fake user
+	// app.use((req, res, next) => {
+	// 	req.user = {
+	// 		profile: {
+	// 			emails: ['test@localhost']
+	// 		},
+	// 		displayName: 'Fake user name'
+	// 	};
+	// 	next();
+	//
+	// });
 
 	app.use(function(req, res, next) {
 		if (req.headers['x-user-info-proxy']) {
@@ -64,7 +77,7 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 			console.log(req.user.profile.displayName);
 		}
 		next();
-	})
+	});
 
 	app.get(config.admin.pathname, function(req, res, next) {
 		if (req.user) {
@@ -72,37 +85,37 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 		} else {
 			res.sendStatus(403);
 		}
-	})
+	});
 
 	app.use(function(req, res, next) {
 		res.locals.partials = {};
 
-		var file = req.url.replace(prefix + '/', '');
+		const file = req.url.replace(prefix + '/', '');
 		if (file.match(/_/)) {
 			res.locals.partial = true;
 		}
 		req.file = path.resolve(fsRoot, file + '.md');
 		next();
-	})
+	});
 
 	if (config.app.partials && config.app.partials.length) {
 		config.app.partials.forEach((partial) => {
 			app.use(function(req, res, next) {
 				if (!res.locals.partial) {
-					var p = path.resolve(fsRoot, this.partial + '.md');
+					const p = path.resolve(fsRoot, this.partial + '.md');
 					fs.readFile(p, (err, data) => {
 						if (!err) {
 							res.locals.partials[this.partial] = marked(data.toString());
 						}
-						next()
-					})
+						next();
+					});
 				} else {
-					next()
+					next();
 				}
 			}.bind({
 				partial: partial
 			}));
-		})
+		});
 	}
 
 	app.use(bodyParser.json(), function(req, res, next) {
@@ -112,7 +125,7 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 					fs.writeFile(req.file, req.body.body, function(err, output) {
 						if (err) {
 							console.error(err);
-							res.sendStatus(500)
+							res.sendStatus(500);
 						} else {
 							dirty = true;
 							res.sendStatus(200);
@@ -123,12 +136,12 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 									console.log(req.file + ' Added');
 									git.commit('Autocommit for ' + req.user.profile.displayName, function(err) {
 										console.error(err);
-									})
+									});
 								}
-							})
+							});
 						}
-					})
-				})
+					});
+				});
 			} else {
 				res.sendStatus(403);
 			}
@@ -139,7 +152,7 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 
 	app.use(function(req, res, next) {
 		if (['HEAD', 'GET'].includes(req.method)) {
-			var current = new URL(req.url, req.protocol + '://' + req.headers.host);
+			const current = new URL(req.url, req.protocol + '://' + req.headers.host);
 			fs.readFile(req.file, (err, data) => {
 				if (req.accepts('html')) {
 					if (err && req.url == '/' && err.code == 'ENOENT' && config.app.defaultPage) {
@@ -151,19 +164,19 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 							source: '',
 							hash: crypto.createHash('md5').update(secret + req.url).digest('hex'),
 							authenticated: (req.user ? true : false)
-						})
+						});
 					} else {
 						res.render('index', {
 							body: marked(data.toString()),
 							source: data.toString(),
 							hash: crypto.createHash('md5').update(secret + req.url).digest('hex'),
 							authenticated: (req.user ? true : false)
-						})
+						});
 					}
 				} else if (req.accepts('text/markdown')) {
 					res.send(data).end();
 				}
-			})
+			});
 		} else {
 			next();
 		}
@@ -189,14 +202,14 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 		res.sendStatus(404);
 	});
 
-	var server = http.createServer(app);
+	const server = http.createServer(app);
 
 	// Based on
 	// https://stackoverflow.com/questions/16178239/gracefully-shutdown-unix-socket-server-on-nodejs-running-under-forever
 
 	server.on('error', function(e) {
 		if (e.code == 'EADDRINUSE') {
-			var s = new http.createServer(app);
+			const s = new http.createServer(app);
 			s.on('error', function(e) { // handle error trying to talk to server
 				if (e.code == 'ECONNREFUSED') { // No other server listening
 					fs.unlinkSync(config.app.port);
@@ -215,4 +228,4 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 	});
 
 	server.listen(config.app.port);
-}))
+}));

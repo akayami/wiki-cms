@@ -9,12 +9,12 @@ const Mitter = require('../lib/mitter');
 
 const connector = new Connector();
 
-var editables = document.getElementsByClassName('container-editable');
+const editables = document.getElementsByClassName('container-editable');
 
-var sections = {};
+const sections = {};
 
-for(var x = 0; x < editables.length; x++) {
-	var s = new Section(editables[x]);
+for(let x = 0; x < editables.length; x++) {
+	const s = new Section(editables[x]);
 	sections[s.getPath()] = s;
 }
 
@@ -39,7 +39,7 @@ module.exports = class Connector extends Mitter {
 		}.bind(this));
 	}
 
-}
+};
 
 },{"./mitter":3,"cookie-talk":9}],3:[function(require,module,exports){
 module.exports = class Mitter {
@@ -50,7 +50,7 @@ module.exports = class Mitter {
 
 	emit(namespace, payload, sync = false) {
 		if (window[this.globalNS] && window[this.globalNS][namespace]) {
-			for (var x = 0; x < window[this.globalNS][namespace].length; x++) {
+			for (let x = 0; x < window[this.globalNS][namespace].length; x++) {
 				if (sync) {
 					window[this.globalNS][namespace][x](payload);
 				} else {
@@ -67,18 +67,18 @@ module.exports = class Mitter {
 
 	on(namespace, func) {
 		if (!window[this.globalNS]) {
-			window[this.globalNS] = {}
+			window[this.globalNS] = {};
 		}
 		if (!window[this.globalNS][namespace]) {
 			window[this.globalNS][namespace] = [];
 		}
 		window[this.globalNS][namespace].push(func);
 	}
-}
+};
 
 },{}],4:[function(require,module,exports){
 const mitter = require('./mitter');
-const marked = require('../node_modules/marked/index.js')
+const marked = require('../node_modules/marked/index.js');
 
 module.exports = class Section extends mitter {
 
@@ -94,7 +94,7 @@ module.exports = class Section extends mitter {
 			// if (e.shiftKey) {
 			// 	this.emit('load.section', this.path);
 			// }
-		}.bind(this))
+		}.bind(this));
 	}
 
 	getPath() {
@@ -104,7 +104,7 @@ module.exports = class Section extends mitter {
 	update(data) {
 		this.element.innerHTML = marked(data);
 	}
-}
+};
 
 },{"../node_modules/marked/index.js":14,"./mitter":3}],5:[function(require,module,exports){
 const Mitter = require('./mitter');
@@ -117,17 +117,17 @@ module.exports = class Updater extends Mitter {
 		this.sections = sections;
 		this.command = new CookieTalk('push-text');
 		this.command.onMessage((data) => {
-			var object = JSON.parse(data);
+			const object = JSON.parse(data);
 			if(this.sections[object.path]) {
 				this.sections[object.path].update(object.data);
 			} else {
-				this.emit('error', new Error('Invalid section push'))
+				this.emit('error', new Error('Invalid section push'));
 				console.error('Invalid section push' + object.path);
 				console.log(this.sections);
 			}
-		})
+		});
 	}
-}
+};
 
 },{"./mitter":3,"cookie-talk":9}],6:[function(require,module,exports){
 'use strict'

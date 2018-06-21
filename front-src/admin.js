@@ -4,7 +4,7 @@ const Api = require('../lib/admin/api');
 const Editor = require('../lib/admin/editor');
 const Save = require('../lib/admin/save');
 
-const ns = 'admin'
+const ns = 'admin';
 
 const receptor = new Receptor(ns);
 const api = new Api(ns);
