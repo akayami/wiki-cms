@@ -6,5 +6,5 @@ program
 	.version('0.0.1')
 	//.arguments('<config-file>', 'Start wiki-cms using specified config file')
 	.command('start', 'Starts an instance of wiki-cms')
-	.command('generate', 'Generate default config stub')
+	.command('generate', 'Generate default config stub');
 program.parse(process.argv);

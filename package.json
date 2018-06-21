@@ -31,7 +31,7 @@
 		"minify": "make minify",
 		"build": "node_modules/.bin/yarn bundle && node_modules/.bin/yarn minify",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"lint": "node_modules/.bin/eslint --fix --ignore-pattern *.min.js ."
+		"lint": "node_modules/.bin/eslint --fix --ignore-pattern *.min.js"
 	},
 	"repository": {
 		"type": "git",

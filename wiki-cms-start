@@ -23,17 +23,32 @@ try {
 	process.exit();
 }
 
+const cluster = require('cluster');
+
+function newWorker() {
+	const worker = cluster.fork();
+	worker.on('exit', function(code, signal) {
+		if (signal) {
+			console.log(`Worker killed by signal: ${signal}`);
+		} else if (code !== 0) {
+			console.log(`worker exited with error code: ${code}`);
+		} else {
+			console.log('worker success!');
+		}
+	});
+	return worker;
+}
+
 fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 	const config = toml.parse(data);
 
 	const git = require('simple-git')(config.git.repo);
 
-	const cluster = require('cluster');
 	const numCPUs = require('os').cpus().length;
 
 	if (cluster.isMaster) {
 		const remote = (config.git.remote ? config.git.remote : 'origin');
-		const branch = (config.git.branch ? config.git.branch : 'master')
+		const branch = (config.git.branch ? config.git.branch : 'master');
 		git.pull(remote, branch, function() {
 			console.log('Pull Done');
 		});
@@ -44,7 +59,7 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 					console.log(err);
 				}
 				console.log('Auto Pull Done');
-			})
+			});
 		}, (config.git.pull_freq ? config.git.pull_freq : 60000));
 
 		setInterval(function() {
@@ -53,34 +68,20 @@ fs.createReadStream(cfgfile, 'utf8').pipe(concat(function(data) {
 					console.log(err);
 				}
 				console.log('Auto Push Done');
-			})
-		}, (config.git.push_freq ? config.git.push_freq : 60000))
-
-		function newWorker() {
-			var worker = cluster.fork();
-			worker.on('exit', function(code, signal) {
-				if (signal) {
-					console.log(`Worker killed by signal: ${signal}`);
-				} else if (code !== 0) {
-					console.log(`worker exited with error code: ${code}`);
-				} else {
-					console.log('worker success!');
-				}
-			})
-			return worker;
-		}
+			});
+		}, (config.git.push_freq ? config.git.push_freq : 60000));
 
 		// Fork workers.
-		for (var i = 0; i < numCPUs; i++) {
-			var worker = newWorker();
+		for (let i = 0; i < numCPUs; i++) {
+			const worker = newWorker();
 		}
 
-		var event = cluster.on('exit', function(deadWorker, code, signal) {
-			var worker = newWorker();
+		const event = cluster.on('exit', function(deadWorker, code, signal) {
+			const worker = newWorker();
 
 			// Note the process IDs
-			var newPID = worker.process.pid;
-			var oldPID = deadWorker.process.pid;
+			const newPID = worker.process.pid;
+			const oldPID = deadWorker.process.pid;
 
 			// Log the event
 			console.log('worker ' + oldPID + ' died.');
